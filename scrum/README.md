@@ -21,7 +21,7 @@
 * [Ứng dụng scrum trong 1 team DEV](#ungdung)
 <!--te-->
 
-![SCRUM](/images/sprint.png)
+![SCRUM](images/sprint.png)
 
 <a name="define"></a>
 ## Definenation :book:
