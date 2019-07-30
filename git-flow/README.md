@@ -5,16 +5,13 @@
 - Vấn đề đặt ra là khi ta làm việc trên master và muốn release một phiên bản của production và ta vẫn muốn các công việc hay việc phát triển các tính năng cho lần release sau đảm bảo vẫn diễn ra song song giải pháp lúc này là sử dụng git branching.
 Là kỹ thuật phân nhánh, đó là việc phân nhánh trong working tree ta đang làm việc.
 ![Git](images/git-model.png)
-Ảnh này e kiếm đc trên mạng tiện xem hình này e có 2 vấn đề này:
-1.  E thấy trên hình khi bắt đầu 1 nhánh release để chuẩn bị release 1 bản production thì khi mình fix bug và chuẩn bị 1 số thứ để release thì khi này trên nhánh develop lại đang muốn tạo một tính năng mới thì mình merge release vào luôn để tránh lỗi chứ không nhất thiết phải cứ hoàn thành release xong merge vào rùi mới được tạo tính năng mới. Với cả trong khi đang có nhánh release thì tất cả các tính năng cho đợt release sau k được phép merge vào đúng k a.
-2. Về việc rebase nhánh develop để áp dụng các commit mới nhất của develop vào một feature để merge vào tránh việc bị conlict thì e hiểu r. Với cả e thấy merge vào thì nó tạo ra một commit mới như trong hình vẽ trong doc của anh ấy mà ở trong ảnh này sao 2 nhánh feature cuối trong hình đều chỉ đến một commit nhỉ.
 ### branch meaning
 Gồm hai nhánh chính đó là:
 - ***Master***: 
   - Nơi phản ánh trạng thái đã sẵn sàng deploy lên production.
 - ***Develop***: 
   - Là nơi mà diễn ra toàn bộ quá trình phát triển. Khi mà source code đã đạt một độ ổn định nhất định và sẵn sàng release thì sẽ tạo ra một nhánh là release từ nhánh develop và nhánh release này chỉ được phép fix bug. Sau đó sẽ được merge trở lại nhánh develop và nhánh master được đánh dấu với một tag release version.
-
+  
 Bên cạnh đó cũng bao gồm các nhánh phụ base trên các nhánh chính để giúp các thành viên trong team có thể phát triển cùng lúc, theo dõi theo feature, chuản bị để release và sửa các lỗi trong giai đoạn production như:
 
 - ***Feature***: 
@@ -23,6 +20,36 @@ Bên cạnh đó cũng bao gồm các nhánh phụ base trên các nhánh chính
   - Khi cần chuẩn bị để release một phiên bản production mới ta sẽ tạo ra một nhánh release này. Hoàn thành các công việc cuối cùng trc khi release trên nhánh này và fix các bug nhưng không thể code thêm tính năng mới trên nhánh này. Khi đã tách riêng 1 nhánh này ra khỏi nhánh develop thì ta hoàn toàn có thể phát triển tiếp các tính năng cho đợt release tiếp theo.
   - Điều kiện để tạo một nhánh release là khi mà nhánh develop đã đạt được trạng thái (điều kiện) thỏa mãn như các tính năng cần thiết đã đạt yêu cầu và đã được merge vào đầy đủ. Còn các feature khác là điều kiện cho các lần release sau phải đợi sau khi tạo nhánh release này xong mới được merge vào. 
   - Cuối cùng là sau khi đã thực hiện xong các bước chuẩn bị để release bản production ta tiến hành merge nhánh này vào develop và sau đó là master với tag release number.
+  - Khi đủ điều kiện để tạo một bản release đầu tiên ta sẽ tạo một nhánh release:
+  ```
+  git checkout -b release-1.5 develop
+  ./release.sh 1.5
+  git commit -am 'Increamenting vervion number to 1.5'
+  ```
+  - Trong đó release.sh là một script tượng trưng cho việc thay đổi một số file trong source để biểu thị phiên bản mới. Sau đó ta sẽ tiến hành commit thao tác này. 
+  - Sau khi thực hiện xong việc fix bug để tiến hành release, mọi thứ đã sẵn sàng thì đầu tiên ta merge release vào master và gắn tag number vào commit merge để có thể dễ dàng tham chiếu:
+  ```
+  git checkout master
+  git merge --no-ff release-1.5
+  git tag -a 1.5 -m 'Release version-1.5'
+  ```
+  - Sau đó tiến hành merge vào develop.
+  ```
+  git checkout develop
+  git merge --no-ff release-1.2
+  ```
+  - Việc release đã hoàn thành lúc này ta đã có thể xóa nhánh này đi.
+  - Về cách quản lý các bản release:
+  - Chuyển về nhánh master gõ lênh: ```git tag``` lúc này ta sẽ thấy danh sách các tag có trong dự án:
+  ```
+  duong@DESKTOP-F31ICUI MINGW64 ~/testt (master)
+  $ git tag
+  1.5
+  ```
+  - Mặc định lệnh ```git push``` sẽ không đẩy tag lên remote repository mà ta phải dùng lệnh ```git push --tags``` để đẩy toàn bộ lên remote repository hoặc đẩy một tag chỉ định lên ```git push tag_number```
+  - Lên trên github lúc này sẽ thấy tag xuất hiện ở trên repository. Bấm vào thẻ release trên github ta sẽ thấy giao diện quản lý các bản release như sau:
+  ![image](images/release1.jpg)
+  ![image](images/release2.jpg)
 - ***Hotfix***:
   - Hotfix khá giống release đều prepare cho việc release production chỉ là một cái là có plan và một cái hotfix là k có plan cụ thể đó là việc trên bản production xảy ra một lỗi nào đó lúc này ta phải tạo ngay một nhánh là hotfix được đánh version (khi tạo nhánh hot fix mới tiến hành update tag release ver) cho dễ nhận biết và tiến hành sửa lỗi. Nhờ đó một số bộ phận sẽ tiến hành fix bug trên nhánh này một số khác vẫn tiến hành làm việc trên develop bình thường.
   - Sau đó khi kết thúc việc sửa lỗi tiến hành merge vào master và tất nhiên là cả develop để tránh việc code chạy lỗi, nếu vẫn còn tồn tại nhánh release thì merver vào nhánh release này vì cuối cùng nhánh release cũng sẽ merge vào develop ngoại trừ việc nhánh develop này cần fix ngay bug xảy ra trên production.
